@@ -58,9 +58,32 @@ Documento de la mesa:
     alto: 75
   }
 }
-```
 
 ### A2 - Anuncio y vendedor
+
+**1. ¿Por qué no embebemos el usuario completo dentro del anuncio? Da dos razones.**
+
+Porque un mismo usuario puede tener varios anuncios y estaríamos repitiendo toda su información en cada uno.
+
+Además, si el usuario cambiara algún dato, como su nombre o email, tendríamos que modificarlo en todos los anuncios donde aparezca.
+
+**2. ¿Por qué copiamos el nombre del vendedor y no su email ni su ciudad?**
+
+Porque en la ficha del anuncio necesitamos mostrar el nombre del vendedor, pero no hace falta tener todos sus datos.
+
+El email es información personal que no necesitamos mostrar y la ciudad del anuncio ya se guarda por separado. Así evitamos duplicar información innecesaria.
+
+**3. Si Luis cambia su nombre, ¿qué documentos hay que actualizar?**
+
+Primero habría que actualizar el documento de Luis en la colección de usuarios.
+
+Después tendríamos que actualizar sus anuncios y cualquier otro documento donde hayamos copiado su nombre, por ejemplo, las ofertas que haya realizado.
+
+**4. En el gimnasio de SQL, ¿cómo se resolvía mostrar el nombre del monitor de cada clase? ¿Qué cambia aquí?**
+
+En PostgreSQL utilizábamos una clave ajena para relacionar las clases con los monitores y después hacíamos un JOIN para obtener el nombre.
+
+En MongoDB guardamos el ID del vendedor y una copia de su nombre dentro del anuncio. De esta manera podemos mostrarlo directamente sin tener que consultar otra colección.
 
 ### A3 - Ofertas
 
@@ -79,3 +102,4 @@ Documento de la mesa:
 ### B5.12 - Consultas sobre atributos
 
 ### B8 - Preguntas finales
+```
