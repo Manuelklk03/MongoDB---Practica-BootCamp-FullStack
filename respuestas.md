@@ -46,7 +46,7 @@ Documento del iPhone:
 
 Documento de la mesa:
 
-````javascript
+```javascript
 {
   titulo: "Mesa de comedor de roble",
   categoria: "Muebles",
@@ -58,6 +58,7 @@ Documento de la mesa:
     alto: 75
   }
 }
+```
 
 ### A2 - Anuncio y vendedor
 
@@ -109,7 +110,7 @@ Crearía una colección independiente llamada `ofertas`, porque un anuncio puede
     nombre: "Sara López"
   }
 }
-````
+```
 
 **3. ¿Qué datos copiaríamos del anuncio?**
 
@@ -228,7 +229,3 @@ He elegido esta estructura porque permite consultar fácilmente los datos más u
 ### B5.12 - Consultas sobre atributos
 
 ### B8 - Preguntas finales
-
-```
-
-```
