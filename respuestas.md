@@ -86,7 +86,6 @@ En PostgreSQL utilizábamos una clave ajena para relacionar las clases con los m
 
 En MongoDB guardamos el ID del vendedor y una copia de su nombre dentro del anuncio. De esta manera podemos mostrarlo directamente sin tener que consultar otra colección.
 
-
 ### A3 - Ofertas
 
 **1. ¿Embebemos las ofertas o creamos una colección?**
@@ -223,6 +222,22 @@ He elegido esta estructura porque permite consultar fácilmente los datos más u
 ## Parte B - Explicaciones
 
 ### B2.3 - Nuevas categorías
+
+No he tenido que modificar ninguna colección para añadir la categoría Deporte, porque MongoDB permite que cada documento tenga sus propios atributos.
+
+En PostgreSQL, si los atributos estuvieran definidos como columnas, tendría que modificar la tabla para añadir los nuevos. En cambio, si utilizara un campo JSONB, no necesitaría cambiar la estructura.
+
+### Comprobación de B1, B2 y B3 — 2 de noviembre de 2026
+
+Ejecutado en `rastro`, dentro de `mongodb-practica` (MongoDB 8.0.34), sin reiniciar ni borrar la base de datos.
+
+- **B1:** 5 usuarios, 8 anuncios, 5 ofertas y 1 valoración después de la carga inicial.
+- **B2:** insertados la bicicleta Orbea y el Google Pixel 7; total de 10 anuncios.
+- **B3:** índices `email_1` (único), `autor.id_1_anuncioId_1` (único) y `categoria_1_precio_1` creados y comprobados con `getIndexes()`.
+- **Explain:** plan `FETCH → IXSCAN`, índice `categoria_1_precio_1`, 2 documentos devueltos y 2 claves y documentos examinados. Los coches salen ordenados: Ford Focus (4200) y Seat Ibiza (6500).
+- Comprobados los conteos, los atributos y las fotos de los dos anuncios nuevos y las referencias de vendedores, compradores y anuncios de ofertas.
+
+La carga se ha ejecutado una sola vez. No hay que volver a ejecutar las inserciones sobre estos datos. B4 y siguientes quedan pendientes.
 
 ### B4 - Integridad de datos
 
