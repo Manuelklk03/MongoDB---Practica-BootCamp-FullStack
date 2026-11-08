@@ -239,18 +239,18 @@ Ejecutado en `rastro`, dentro de `mongodb-practica` (MongoDB 8.0.34), sin reinic
 
 La carga se ha ejecutado una sola vez. No hay que volver a ejecutar las inserciones sobre estos datos.
 
-Las secciones B4–B7 están preparadas en `rastro.js` para ejecutarse a continuación, en ese orden. Las predicciones de B4 se escribieron antes de probarlas. El entorno actual no tiene el motor de Docker en marcha, así que los resultados de B4–B7 aún requieren ejecución en `mongosh`; no se presentan aquí como observaciones verificadas.
+El 8 de noviembre de 2026 ejecuté `rastro.js` completo con `mongosh` en un contenedor temporal aislado de MongoDB 8.0, partiendo de una base vacía. Las predicciones de B4 se escribieron antes de esta ejecución. B1 dejó 5 usuarios, 8 anuncios, 5 ofertas y 1 valoración; B2 elevó los anuncios a 10. B4–B7 terminaron sin errores inesperados. Esta ejecución es independiente de la comprobación anterior del 2 de noviembre.
 
 ### B4 - Integridad de datos
 
-| Prueba | Predicción y motivo | Resultado esperado y explicación |
+| Prueba | Predicción y motivo | Resultado observado y explicación |
 |---|---|---|
-| B4.1: email repetido | Fallará: `email_1` es único. | `E11000 duplicate key error`, por el índice único de `usuarios.email`. |
-| B4.2: segunda valoración de Hugo | Fallará: se repite la pareja `autor.id` + `anuncioId`. | `E11000 duplicate key error`, por el índice único compuesto. |
-| B4.3: vendedor inexistente | Se insertará: MongoDB no valida referencias entre colecciones. | Queda un anuncio huérfano hasta que lo borremos. La aplicación debe comprobar que existe el vendedor. |
-| B4.4: precio `"75"` | Se insertará: no hemos configurado un validador de esquema. | La consulta `{ precio: { $lt: 100 } }` compara números con números y no incluye ese texto. |
-| B4.5: actualización sin `$set` | Fallará: el segundo argumento de `updateOne` necesita operadores. | `Update document requires atomic operators`; el precio del Xiaomi permanece igual. |
-| B4.6: id como texto | La consulta no encontrará el iPhone. | `null`: el `_id` guardado es un `ObjectId`, no un string. |
+| B4.1: email repetido | Fallará: `email_1` es único. | `E11000 duplicate key error collection: rastro.usuarios index: email_1`; lo impide el índice único de `usuarios.email`. |
+| B4.2: segunda valoración de Hugo | Fallará: se repite la pareja `autor.id` + `anuncioId`. | `E11000 duplicate key error collection: rastro.valoraciones index: autor.id_1_anuncioId_1`; lo impide el índice único compuesto. |
+| B4.3: vendedor inexistente | Se insertará: MongoDB no valida referencias entre colecciones. | Se insertó el anuncio huérfano y se eliminó al terminar B4. La aplicación debe comprobar que existe el vendedor. |
+| B4.4: precio `"75"` | Se insertará: no hemos configurado un validador de esquema. | Se insertó; la consulta `{ precio: { $lt: 100 } }` no incluyó la lámpara porque el precio era texto. |
+| B4.5: actualización sin `$set` | Fallará: el segundo argumento de `updateOne` necesita operadores. | `Update document requires atomic operators`; el precio del Xiaomi permaneció igual hasta B7. |
+| B4.6: id como texto | La consulta no encontrará el iPhone. | Devolvió `null`: el `_id` guardado es un `ObjectId`, no un string. |
 
 **B4.7.** En PostgreSQL, una clave ajena habría rechazado un `plan_id` inexistente. En Rastro, el servicio que crea el anuncio debe consultar `usuarios` y rechazar un vendedor ausente; MongoDB no aporta una clave ajena entre colecciones.
 
@@ -268,5 +268,5 @@ En B5.6 filtro por `vendedor.id`: el identificador no cambia cuando Luis modific
 
 ### B6.4 - Valor en venta por vendedor
 
-La agregación filtra primero `DISPONIBLE`, agrupa por `vendedor.nombre` y suma `precio`. Con los 10 anuncios de B1–B2, antes de B7, el resultado esperado es Luis Martín: 6590 €, Hugo Sanz: 4620 €, Ana García: 380 €, Sara López: 260 € y Marta Ruiz: 25 €. La captura exigida debe tomarse de la salida real de `mongosh` al ejecutar B6.4; estos importes son un cálculo previo, no una captura de ejecución.
+La agregación filtra primero `DISPONIBLE`, agrupa por `vendedor.nombre` y suma `precio`. Antes de B7 devolvió Luis Martín: 6590 €, Hugo Sanz: 4620 €, Ana García: 380 €, Sara López: 260 € y Marta Ruiz: 25 €. [Captura de la salida real de `mongosh`](capturas/b6-4.png). La imagen representa el texto obtenido en la ejecución; no se inventaron resultados.
 
