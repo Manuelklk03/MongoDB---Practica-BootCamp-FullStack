@@ -515,4 +515,62 @@ printjson(
     .explain("executionStats"),
 );
 
-// Fin de los ejercicios B1, B2 y B3
+// Ejercicio B4 - COMPROBAR QUÉ PROTEGE LA BASE DE DATOS
+// Ejecutar esta sección después de B3. Los errores de B4.1, B4.2 y B4.5
+// son el resultado esperado; se capturan para poder seguir con la práctica.
+
+// B4.1 - El índice único de email rechaza el duplicado.
+try {
+  db.usuarios.insertOne({ nombre: "Ana Copia", email: "ana@rastro.es", ciudad: "Valencia", fechaAlta: new Date(), favoritos: [], valoracionMedia: 0, numValoraciones: 0 });
+} catch (error) {
+  print("B4.1:", error.message);
+}
+
+// B4.2 - El índice compuesto rechaza una segunda valoración de la misma compra.
+try {
+  db.valoraciones.insertOne({ anuncioId: ObjectId("670000000000000000000004"), autor: { id: ObjectId("660000000000000000000004"), nombre: "Hugo Sanz" }, valoradoId: ObjectId("660000000000000000000003"), estrellas: 1, comentario: "Cambio de opinión", fecha: new Date() });
+} catch (error) {
+  print("B4.2:", error.message);
+}
+
+// B4.3 - MongoDB no comprueba si el vendedor referenciado existe.
+db.anuncios.insertOne({ titulo: "Prueba fantasma", precio: 10, categoria: "Libros", estado: "DISPONIBLE", ciudad: "Valencia", fechaPublicacion: new Date(), visitas: 0, vendedor: { id: ObjectId("660000000000000000000099"), nombre: "Nadie" }, fotos: [], atributos: {} });
+
+// B4.4 - Sin validador, también se acepta un precio de tipo texto.
+db.anuncios.insertOne({ titulo: "Prueba lámpara", precio: "75", categoria: "Muebles", estado: "DISPONIBLE", ciudad: "Valencia", fechaPublicacion: new Date(), visitas: 0, vendedor: { id: ObjectId("660000000000000000000001"), nombre: "Ana García" }, fotos: [], atributos: { material: "metal" } });
+printjson(db.anuncios.find({ precio: { $lt: 100 } }, { titulo: 1, precio: 1, _id: 0 }).toArray());
+
+// B4.5 - updateOne exige un operador de actualización.
+try {
+  db.anuncios.updateOne({ _id: ObjectId("670000000000000000000005") }, { precio: 80 });
+} catch (error) {
+  print("B4.5:", error.message);
+}
+
+// B4.6 - Un string no coincide con un ObjectId, aunque tenga los mismos caracteres.
+printjson(db.anuncios.findOne({ _id: "670000000000000000000003" }));
+
+// Retirar solo los dos documentos de prueba creados en esta sección.
+db.anuncios.deleteMany({ titulo: { $in: ["Prueba fantasma", "Prueba lámpara"] } });
+
+// Ejercicio B5 - CONSULTAS
+printjson(db.anuncios.find({ estado: "DISPONIBLE", ciudad: "Valencia" }, { _id: 0, titulo: 1, precio: 1 }).sort({ precio: 1 }).toArray()); // B5.1
+printjson(db.anuncios.find({ categoria: "Coches", "atributos.km": { $lt: 100000 } }).toArray()); // B5.2
+printjson(db.anuncios.find({ categoria: "Móviles", "atributos.almacenamientoGB": { $gte: 128 } }).toArray()); // B5.3
+printjson(db.anuncios.find({ precio: { $gte: 50, $lte: 400 } }).toArray()); // B5.4
+printjson(db.anuncios.find({ titulo: /nike/i }).toArray()); // B5.5
+printjson(db.anuncios.find({ "vendedor.id": ObjectId("660000000000000000000002") }).toArray()); // B5.6
+printjson(db.anuncios.find({ fotos: { $size: 0 } }).toArray()); // B5.7
+printjson(db.ofertas.find({ estado: "PENDIENTE", "anuncio.id": ObjectId("670000000000000000000001") }).toArray()); // B5.8
+printjson(db.usuarios.find({ favoritos: ObjectId("670000000000000000000008") }, { _id: 0, nombre: 1 }).toArray()); // B5.9
+print("B5.10 - Anuncios vendidos:", db.anuncios.countDocuments({ estado: "VENDIDO" }));
+printjson(db.anuncios.find({}, { _id: 0, titulo: 1, visitas: 1 }).sort({ visitas: -1 }).limit(3).toArray()); // B5.11
+
+// Ejercicio B6 - AGREGACIONES
+printjson(db.anuncios.aggregate([{ $group: { _id: "$categoria", total: { $sum: 1 } } }, { $sort: { total: -1, _id: 1 } }]).toArray()); // B6.1
+printjson(db.anuncios.aggregate([{ $group: { _id: "$categoria", precioMedio: { $avg: "$precio" } } }, { $sort: { _id: 1 } }]).toArray()); // B6.2
+printjson(db.anuncios.aggregate([{ $group: { _id: "$ciudad", total: { $sum: 1 } } }, { $sort: { total: -1, _id: 1 } }]).toArray()); // B6.3
+print("B6.4 - Valor en venta por vendedor:");
+printjson(db.anuncios.aggregate([{ $match: { estado: "DISPONIBLE" } }, { $group: { _id: "$vendedor.nombre", valorEnVenta: { $sum: "$precio" } } }, { $sort: { valorEnVenta: -1, _id: 1 } }]).toArray());
+printjson(db.anuncios.aggregate([{ $group: { _id: "$categoria", visitasTotales: { $sum: "$visitas" } } }, { $sort: { visitasTotales: -1, _id: 1 } }, { $limit: 1 }]).toArray()); // B6.5
+
