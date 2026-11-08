@@ -272,11 +272,15 @@ La agregación filtra primero `DISPONIBLE`, agrupa por `vendedor.nombre` y suma 
 
 ### B7 - Modificaciones
 
-**B7.3.** `$addToSet` no añade por segunda vez el id del Ford Focus; `$pull` retira el del iPhone.
+**B7.3.** Verificado: `$pull` retiró el iPhone y dos llamadas a `$addToSet` dejaron una sola referencia al Ford Focus. Se usan instrucciones separadas porque ambos operadores modifican el mismo array.
 
 **B7.4.** Se necesitan dos `updateOne`, uno en `ofertas` y otro en `anuncios`. Si el proceso se interrumpe entre ambas escrituras, la oferta puede quedar aceptada mientras el anuncio sigue disponible. En un flujo de compra real usaríamos una transacción con una sesión de MongoDB o una operación de compensación, según los requisitos.
 
+En la ejecución se comprobaron la oferta `ACEPTADA` y el Seat `RESERVADO`. Tras la rebaja B7.5, el Seat costaba 5850 € y el Ford 3780 €.
+
 **B7.6.** Tras cambiar solo `usuarios.nombre`, los anuncios siguen mostrando «Luis Martín» porque guardan una copia. Hay que sincronizar por id los nombres copiados en `anuncios.vendedor`, `ofertas.comprador` y `valoraciones.autor`; ahora mismo Luis no figura como autor de una valoración, pero la operación cubre ese caso.
+
+La comprobación final confirmó el nuevo nombre en el usuario, sus dos anuncios y su oferta. También confirmó 5 usuarios, 10 anuncios, 5 ofertas, 1 valoración, cero anuncios de prueba, cuatro fotos del iPhone y 49 visitas del Xiaomi.
 
 ### B8 - Preguntas finales
 
