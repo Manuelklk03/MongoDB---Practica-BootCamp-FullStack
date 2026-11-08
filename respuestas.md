@@ -270,3 +270,23 @@ En B5.6 filtro por `vendedor.id`: el identificador no cambia cuando Luis modific
 
 La agregación filtra primero `DISPONIBLE`, agrupa por `vendedor.nombre` y suma `precio`. Antes de B7 devolvió Luis Martín: 6590 €, Hugo Sanz: 4620 €, Ana García: 380 €, Sara López: 260 € y Marta Ruiz: 25 €. [Captura de la salida real de `mongosh`](capturas/b6-4.png). La imagen representa el texto obtenido en la ejecución; no se inventaron resultados.
 
+### B7 - Modificaciones
+
+**B7.3.** Verificado: `$pull` retiró el iPhone y dos llamadas a `$addToSet` dejaron una sola referencia al Ford Focus. Se usan instrucciones separadas porque ambos operadores modifican el mismo array.
+
+**B7.4.** Se necesitan dos `updateOne`, uno en `ofertas` y otro en `anuncios`. Si el proceso se interrumpe entre ambas escrituras, la oferta puede quedar aceptada mientras el anuncio sigue disponible. En un flujo de compra real usaríamos una transacción con una sesión de MongoDB o una operación de compensación, según los requisitos.
+
+En la ejecución se comprobaron la oferta `ACEPTADA` y el Seat `RESERVADO`. Tras la rebaja B7.5, el Seat costaba 5850 € y el Ford 3780 €.
+
+**B7.6.** Tras cambiar solo `usuarios.nombre`, los anuncios siguen mostrando «Luis Martín» porque guardan una copia. Hay que sincronizar por id los nombres copiados en `anuncios.vendedor`, `ofertas.comprador` y `valoraciones.autor`; ahora mismo Luis no figura como autor de una valoración, pero la operación cubre ese caso.
+
+La comprobación final confirmó el nuevo nombre en el usuario, sus dos anuncios y su oferta. También confirmó 5 usuarios, 10 anuncios, 5 ofertas, 1 valoración, cero anuncios de prueba, cuatro fotos del iPhone y 49 visitas del Xiaomi.
+
+### B8 - Preguntas finales
+
+1. MongoDB permite que cada categoría tenga atributos distintos sin cambiar las columnas y deja guardar fotos y datos de la ficha dentro del mismo anuncio.
+2. Guardaría pagos, facturas y saldos en SQL, porque sus relaciones e invariantes de integridad necesitan controles estrictos y operaciones coherentes.
+3. Cada anuncio tiene como máximo diez fotos y se leen junto a él; las ofertas pueden crecer sin límite y también se consultan desde el comprador.
+4. La copia conserva el precio que tenía el anuncio cuando se hizo la oferta, aunque luego cambie el precio publicado.
+5. Desnormalizar es copiar un dato en varios documentos para leerlo con menos consultas. El nombre del vendedor aparece directamente en la ficha, pero cambiarlo obliga a actualizar las copias.
+6. La aplicación debe comprobar que el documento referenciado existe; MongoDB no impone claves ajenas entre colecciones. Los índices únicos y los validadores cubren reglas diferentes.

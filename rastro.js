@@ -574,3 +574,43 @@ print("B6.4 - Valor en venta por vendedor:");
 printjson(db.anuncios.aggregate([{ $match: { estado: "DISPONIBLE" } }, { $group: { _id: "$vendedor.nombre", valorEnVenta: { $sum: "$precio" } } }, { $sort: { valorEnVenta: -1, _id: 1 } }]).toArray());
 printjson(db.anuncios.aggregate([{ $group: { _id: "$categoria", visitasTotales: { $sum: "$visitas" } } }, { $sort: { visitasTotales: -1, _id: 1 } }, { $limit: 1 }]).toArray()); // B6.5
 
+// Ejercicio B7 - MODIFICACIONES
+// Cada lectura anterior al update muestra el documento que coincide con su filtro.
+
+// B7.1 - La foto pertenece al anuncio, por eso se añade a su array.
+printjson(db.anuncios.findOne({ _id: ObjectId("670000000000000000000003") }, { fotos: 1 }));
+db.anuncios.updateOne({ _id: ObjectId("670000000000000000000003") }, { $push: { fotos: { url: "https://img.rastro.es/a3-4.jpg", orden: 4 } } });
+
+// B7.2 - $inc evita leer y reescribir manualmente el contador.
+printjson(db.anuncios.findOne({ _id: ObjectId("670000000000000000000005") }, { visitas: 1 }));
+db.anuncios.updateOne({ _id: ObjectId("670000000000000000000005") }, { $inc: { visitas: 1 } });
+
+// B7.3 - $pull retira el iPhone; $addToSet impide duplicar el Ford.
+printjson(db.usuarios.findOne({ _id: ObjectId("660000000000000000000005") }, { favoritos: 1 }));
+db.usuarios.updateOne({ _id: ObjectId("660000000000000000000005") }, { $pull: { favoritos: ObjectId("670000000000000000000003") } });
+printjson(db.usuarios.findOne({ _id: ObjectId("660000000000000000000005") }, { favoritos: 1 }));
+db.usuarios.updateOne({ _id: ObjectId("660000000000000000000005") }, { $addToSet: { favoritos: ObjectId("670000000000000000000002") } });
+printjson(db.usuarios.findOne({ _id: ObjectId("660000000000000000000005") }, { favoritos: 1 }));
+db.usuarios.updateOne({ _id: ObjectId("660000000000000000000005") }, { $addToSet: { favoritos: ObjectId("670000000000000000000002") } });
+printjson(db.usuarios.findOne({ _id: ObjectId("660000000000000000000005") }, { favoritos: 1 }));
+
+// B7.4 - Son dos escrituras en documentos distintos; podrían requerir una transacción.
+printjson(db.ofertas.findOne({ _id: ObjectId("680000000000000000000003") }, { estado: 1 }));
+printjson(db.anuncios.findOne({ _id: ObjectId("670000000000000000000001") }, { estado: 1 }));
+db.ofertas.updateOne({ _id: ObjectId("680000000000000000000003") }, { $set: { estado: "ACEPTADA" } });
+db.anuncios.updateOne({ _id: ObjectId("670000000000000000000001") }, { $set: { estado: "RESERVADO" } });
+
+// B7.5 - El filtro limita la rebaja a los coches.
+printjson(db.anuncios.find({ categoria: "Coches" }, { titulo: 1, precio: 1 }).toArray());
+db.anuncios.updateMany({ categoria: "Coches" }, { $mul: { precio: 0.9 } });
+printjson(db.anuncios.find({ categoria: "Coches" }, { titulo: 1, precio: 1 }).toArray());
+
+// B7.6 - El nombre copiado se sincroniza por id en las tres colecciones.
+printjson(db.usuarios.findOne({ _id: ObjectId("660000000000000000000002") }, { nombre: 1 }));
+db.usuarios.updateOne({ _id: ObjectId("660000000000000000000002") }, { $set: { nombre: "Luis M. Martín" } });
+printjson(db.anuncios.find({ "vendedor.id": ObjectId("660000000000000000000002") }, { "vendedor.nombre": 1 }).toArray());
+db.anuncios.updateMany({ "vendedor.id": ObjectId("660000000000000000000002") }, { $set: { "vendedor.nombre": "Luis M. Martín" } });
+printjson(db.ofertas.find({ "comprador.id": ObjectId("660000000000000000000002") }, { "comprador.nombre": 1 }).toArray());
+db.ofertas.updateMany({ "comprador.id": ObjectId("660000000000000000000002") }, { $set: { "comprador.nombre": "Luis M. Martín" } });
+printjson(db.valoraciones.find({ "autor.id": ObjectId("660000000000000000000002") }, { "autor.nombre": 1 }).toArray());
+db.valoraciones.updateMany({ "autor.id": ObjectId("660000000000000000000002") }, { $set: { "autor.nombre": "Luis M. Martín" } });
