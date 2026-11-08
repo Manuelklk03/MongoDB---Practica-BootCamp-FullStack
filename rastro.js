@@ -587,7 +587,10 @@ db.anuncios.updateOne({ _id: ObjectId("670000000000000000000005") }, { $inc: { v
 
 // B7.3 - $pull retira el iPhone; $addToSet impide duplicar el Ford.
 printjson(db.usuarios.findOne({ _id: ObjectId("660000000000000000000005") }, { favoritos: 1 }));
-db.usuarios.updateOne({ _id: ObjectId("660000000000000000000005") }, { $pull: { favoritos: ObjectId("670000000000000000000003") }, $addToSet: { favoritos: ObjectId("670000000000000000000002") } });
+db.usuarios.updateOne({ _id: ObjectId("660000000000000000000005") }, { $pull: { favoritos: ObjectId("670000000000000000000003") } });
+printjson(db.usuarios.findOne({ _id: ObjectId("660000000000000000000005") }, { favoritos: 1 }));
+db.usuarios.updateOne({ _id: ObjectId("660000000000000000000005") }, { $addToSet: { favoritos: ObjectId("670000000000000000000002") } });
+printjson(db.usuarios.findOne({ _id: ObjectId("660000000000000000000005") }, { favoritos: 1 }));
 db.usuarios.updateOne({ _id: ObjectId("660000000000000000000005") }, { $addToSet: { favoritos: ObjectId("670000000000000000000002") } });
 printjson(db.usuarios.findOne({ _id: ObjectId("660000000000000000000005") }, { favoritos: 1 }));
 
