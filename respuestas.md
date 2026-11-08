@@ -270,3 +270,19 @@ En B5.6 filtro por `vendedor.id`: el identificador no cambia cuando Luis modific
 
 La agregación filtra primero `DISPONIBLE`, agrupa por `vendedor.nombre` y suma `precio`. Con los 10 anuncios de B1–B2, antes de B7, el resultado esperado es Luis Martín: 6590 €, Hugo Sanz: 4620 €, Ana García: 380 €, Sara López: 260 € y Marta Ruiz: 25 €. La captura exigida debe tomarse de la salida real de `mongosh` al ejecutar B6.4; estos importes son un cálculo previo, no una captura de ejecución.
 
+### B7 - Modificaciones
+
+**B7.3.** `$addToSet` no añade por segunda vez el id del Ford Focus; `$pull` retira el del iPhone.
+
+**B7.4.** Se necesitan dos `updateOne`, uno en `ofertas` y otro en `anuncios`. Si el proceso se interrumpe entre ambas escrituras, la oferta puede quedar aceptada mientras el anuncio sigue disponible. En un flujo de compra real usaríamos una transacción con una sesión de MongoDB o una operación de compensación, según los requisitos.
+
+**B7.6.** Tras cambiar solo `usuarios.nombre`, los anuncios siguen mostrando «Luis Martín» porque guardan una copia. Hay que sincronizar por id los nombres copiados en `anuncios.vendedor`, `ofertas.comprador` y `valoraciones.autor`; ahora mismo Luis no figura como autor de una valoración, pero la operación cubre ese caso.
+
+### B8 - Preguntas finales
+
+1. MongoDB permite que cada categoría tenga atributos distintos sin cambiar las columnas y deja guardar fotos y datos de la ficha dentro del mismo anuncio.
+2. Guardaría pagos, facturas y saldos en SQL, porque sus relaciones e invariantes de integridad necesitan controles estrictos y operaciones coherentes.
+3. Cada anuncio tiene como máximo diez fotos y se leen junto a él; las ofertas pueden crecer sin límite y también se consultan desde el comprador.
+4. La copia conserva el precio que tenía el anuncio cuando se hizo la oferta, aunque luego cambie el precio publicado.
+5. Desnormalizar es copiar un dato en varios documentos para leerlo con menos consultas. El nombre del vendedor aparece directamente en la ficha, pero cambiarlo obliga a actualizar las copias.
+6. La aplicación debe comprobar que el documento referenciado existe; MongoDB no impone claves ajenas entre colecciones. Los índices únicos y los validadores cubren reglas diferentes.
