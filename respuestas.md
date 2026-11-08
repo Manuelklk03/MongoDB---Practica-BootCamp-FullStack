@@ -237,10 +237,36 @@ Ejecutado en `rastro`, dentro de `mongodb-practica` (MongoDB 8.0.34), sin reinic
 - **Explain:** plan `FETCH → IXSCAN`, índice `categoria_1_precio_1`, 2 documentos devueltos y 2 claves y documentos examinados. Los coches salen ordenados: Ford Focus (4200) y Seat Ibiza (6500).
 - Comprobados los conteos, los atributos y las fotos de los dos anuncios nuevos y las referencias de vendedores, compradores y anuncios de ofertas.
 
-La carga se ha ejecutado una sola vez. No hay que volver a ejecutar las inserciones sobre estos datos. B4 y siguientes quedan pendientes.
+La carga se ha ejecutado una sola vez. No hay que volver a ejecutar las inserciones sobre estos datos.
+
+Las secciones B4–B7 están preparadas en `rastro.js` para ejecutarse a continuación, en ese orden. Las predicciones de B4 se escribieron antes de probarlas. El entorno actual no tiene el motor de Docker en marcha, así que los resultados de B4–B7 aún requieren ejecución en `mongosh`; no se presentan aquí como observaciones verificadas.
 
 ### B4 - Integridad de datos
 
+| Prueba | Predicción y motivo | Resultado esperado y explicación |
+|---|---|---|
+| B4.1: email repetido | Fallará: `email_1` es único. | `E11000 duplicate key error`, por el índice único de `usuarios.email`. |
+| B4.2: segunda valoración de Hugo | Fallará: se repite la pareja `autor.id` + `anuncioId`. | `E11000 duplicate key error`, por el índice único compuesto. |
+| B4.3: vendedor inexistente | Se insertará: MongoDB no valida referencias entre colecciones. | Queda un anuncio huérfano hasta que lo borremos. La aplicación debe comprobar que existe el vendedor. |
+| B4.4: precio `"75"` | Se insertará: no hemos configurado un validador de esquema. | La consulta `{ precio: { $lt: 100 } }` compara números con números y no incluye ese texto. |
+| B4.5: actualización sin `$set` | Fallará: el segundo argumento de `updateOne` necesita operadores. | `Update document requires atomic operators`; el precio del Xiaomi permanece igual. |
+| B4.6: id como texto | La consulta no encontrará el iPhone. | `null`: el `_id` guardado es un `ObjectId`, no un string. |
+
+**B4.7.** En PostgreSQL, una clave ajena habría rechazado un `plan_id` inexistente. En Rastro, el servicio que crea el anuncio debe consultar `usuarios` y rechazar un vendedor ausente; MongoDB no aporta una clave ajena entre colecciones.
+
+**B4.8.** El precio de la lámpara está guardado como texto. Las comparaciones de rango de MongoDB respetan el tipo BSON del valor consultado; el número `100` no convierte automáticamente `"75"` en número.
+
+**B4.9.** Ambas operaciones muestran reglas de integridad que no hemos definido: existencia de referencias y tipo del precio. Podemos imponer el tipo con un validador de colección; la existencia del vendedor corresponde a la lógica de la aplicación.
+
+Los dos anuncios de prueba se eliminan al terminar B4. Si una inserción falla, el `catch` imprime el mensaje para poder seguir con las demás pruebas.
+
 ### B5.12 - Consultas sobre atributos
 
-### B8 - Preguntas finales
+Los anuncios sin `atributos.km` no coinciden con el filtro y no generan errores. Así, el iPhone simplemente no aparece entre los coches con menos de 100.000 km.
+
+En B5.6 filtro por `vendedor.id`: el identificador no cambia cuando Luis modifica su nombre, mientras que una búsqueda por nombre dejaría de encontrar anuncios con una copia desactualizada.
+
+### B6.4 - Valor en venta por vendedor
+
+La agregación filtra primero `DISPONIBLE`, agrupa por `vendedor.nombre` y suma `precio`. Con los 10 anuncios de B1–B2, antes de B7, el resultado esperado es Luis Martín: 6590 €, Hugo Sanz: 4620 €, Ana García: 380 €, Sara López: 260 € y Marta Ruiz: 25 €. La captura exigida debe tomarse de la salida real de `mongosh` al ejecutar B6.4; estos importes son un cálculo previo, no una captura de ejecución.
+
